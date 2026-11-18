@@ -1,0 +1,196 @@
+@baseUrl = http://localhost:3000
+
+################################################################
+# HOW TO USE
+# 1. Click "Send Request" above each request, in the order below.
+# 2. Run "Login" first. Every authenticated request needs its token.
+# 3. Run "Create a task" before Get, Update and Delete,
+#    because they reuse the id of the task it creates.
+################################################################
+
+
+################################################################
+# SECTION 1: Health check
+################################################################
+
+### Health check (expect 200)
+GET {{baseUrl}}/health
+
+
+################################################################
+# SECTION 2: Authentication
+################################################################
+
+### Register (expect 201; run again and expect 409)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "student@example.com",
+  "password": "supersecret123"
+}
+
+### Login (expect 200 with a token)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "student@example.com",
+  "password": "supersecret123"
+}
+
+
+################################################################
+# SECTION 3: Task CRUD (run in this order)
+################################################################
+
+### 1. Create a task (expect 201)
+# @name createTask
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "title": "Learn authentication",
+  "description": "JWT and bcrypt"
+}
+
+### 2. List my tasks (expect 200)
+GET {{baseUrl}}/tasks
+Authorization: Bearer {{login.response.body.token}}
+
+### 3. Get the task I just created (expect 200)
+GET {{baseUrl}}/tasks/{{createTask.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+### 4. Update it (expect 200, done: true)
+PATCH {{baseUrl}}/tasks/{{createTask.response.body.id}}
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "done": true
+}
+
+### 5. Delete it (expect 204, empty body)
+DELETE {{baseUrl}}/tasks/{{createTask.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+### 6. Get it again after deleting (expect 404)
+GET {{baseUrl}}/tasks/{{createTask.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+
+################################################################
+# SECTION 4: Break it on purpose (authentication errors)
+################################################################
+
+### No token at all (expect 401)
+GET {{baseUrl}}/tasks
+
+### Garbage token (expect 401)
+GET {{baseUrl}}/tasks
+Authorization: Bearer not-a-real-token
+
+### Wrong password (expect 401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "student@example.com",
+  "password": "wrongpassword"
+}
+
+### Unknown email (expect 401, same message as wrong password)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "nobody@example.com",
+  "password": "supersecret123"
+}
+
+### Weak password on register (expect 400)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "weak@example.com",
+  "password": "123"
+}
+
+### Invalid email on register (expect 400)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "not-an-email",
+  "password": "supersecret123"
+}
+
+
+################################################################
+# SECTION 5: Break it on purpose (task validation)
+################################################################
+
+### Empty title (expect 400)
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "title": ""
+}
+
+### Invalid "done" value (expect 400)
+PATCH {{baseUrl}}/tasks/{{createTask.response.body.id}}
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "done": "yes"
+}
+
+### Invalid id (expect 400)
+GET {{baseUrl}}/tasks/abc
+Authorization: Bearer {{login.response.body.token}}
+
+### Task that doesn't exist (expect 404)
+GET {{baseUrl}}/tasks/999999
+Authorization: Bearer {{login.response.body.token}}
+
+
+################################################################
+# SECTION 6: Data isolation experiment
+# Goal: prove that user B cannot touch user A's tasks.
+# Order: run "1. Create a task" again (so a task exists),
+# then the three requests below, in order.
+################################################################
+
+### Register a second user (expect 201)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "other@example.com",
+  "password": "anothersecret123"
+}
+
+### Login as the second user (expect 200)
+# @name login2
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "other@example.com",
+  "password": "anothersecret123"
+}
+
+### Second user tries to read the first user's task (expect 404)
+GET {{baseUrl}}/tasks/{{createTask.response.body.id}}
+Authorization: Bearer {{login2.response.body.token}}
+
+### Second user lists tasks (expect 200 with an EMPTY list)
+GET {{baseUrl}}/tasks
+Authorization: Bearer {{login2.response.body.token}}
