@@ -1,7 +1,12 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const authRoutes = require("./routes/auth");
 const taskRoutes = require("./routes/tasks");
+
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET is not set");
+}
 
 const app = express();
 
@@ -12,9 +17,9 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.use("/auth", authRoutes);
 app.use("/tasks", taskRoutes);
 
-// Central error handler: catches anything that throws in a route
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: "Internal server error" });

@@ -1,8 +1,5 @@
 const prisma = require("../lib/prisma");
 
-// TODO: replace with the authenticated user's id once login exists
-const TEMP_USER_ID = 1;
-
 function parseId(value) {
   const id = Number(value);
   return Number.isInteger(id) && id > 0 ? id : null;
@@ -11,7 +8,7 @@ function parseId(value) {
 // READ (all)
 async function getTasks(req, res) {
   const tasks = await prisma.task.findMany({
-    where: { userId: TEMP_USER_ID },
+    where: { userId: req.user.id },
     orderBy: { createdAt: "desc" },
   });
   res.json(tasks);
@@ -23,7 +20,7 @@ async function getTask(req, res) {
   if (!id) return res.status(400).json({ error: "Invalid task id" });
 
   const task = await prisma.task.findFirst({
-    where: { id, userId: TEMP_USER_ID },
+    where: { id, userId: req.user.id },
   });
   if (!task) return res.status(404).json({ error: "Task not found" });
 
@@ -42,7 +39,7 @@ async function createTask(req, res) {
     data: {
       title: title.trim(),
       description: typeof description === "string" ? description : null,
-      userId: TEMP_USER_ID,
+      userId: req.user.id,
     },
   });
   res.status(201).json(task);
@@ -74,7 +71,7 @@ async function updateTask(req, res) {
   }
 
   const result = await prisma.task.updateMany({
-    where: { id, userId: TEMP_USER_ID },
+    where: { id, userId: req.user.id },
     data,
   });
   if (result.count === 0) {
@@ -91,7 +88,7 @@ async function deleteTask(req, res) {
   if (!id) return res.status(400).json({ error: "Invalid task id" });
 
   const result = await prisma.task.deleteMany({
-    where: { id, userId: TEMP_USER_ID },
+    where: { id, userId: req.user.id },
   });
   if (result.count === 0) {
     return res.status(404).json({ error: "Task not found" });
