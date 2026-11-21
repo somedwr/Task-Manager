@@ -1,16 +1,20 @@
-import { useEffect, useState } from "react";
-import { apiRequest } from "./api/client";
+import { Navigate, Route, Routes } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import TasksPage from "./pages/TasksPage";
+import ProtectedRoute from "./routes/ProtectedRoute";
 
-function App() {
-  const [status, setStatus] = useState("checking...");
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
-  useEffect(() => {
-    apiRequest("/health")
-      .then((data) => setStatus(data.status))
-      .catch((error) => setStatus(`error: ${error.message}`));
-  }, []);
+      <Route element={<ProtectedRoute />}>
+        <Route path="/tasks" element={<TasksPage />} />
+      </Route>
 
-  return <h1>API status: {status}</h1>;
+      <Route path="*" element={<Navigate to="/tasks" replace />} />
+    </Routes>
+  );
 }
-
-export default App;
