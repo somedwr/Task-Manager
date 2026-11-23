@@ -1,9 +1,0 @@
-Log in. You should see the form and "No tasks yet" (or tasks you created earlier).
-Create a task: it appears at the top and the form clears.
-Refresh the page: the task is still there, because it's in the database.
-Toggle the checkbox: the title gets crossed out. Refresh and it should stay that way.
-Edit: click Edit, change the title, Save.
-Delete: confirm the dialog, and it disappears.
-Try to add a task with only spaces in the title. The browser's required allows spaces, so your backend validation should reject it and show "Title is required" in red. That's the server protecting itself.
-Isolation: log out, register a second account, and check that you can't see the first account's tasks.
-Open DevTools → Network while doing step 4, and look at the PATCH request: you'll see a preflight OPTIONS (204) followed by the real request (200), the same pair you saw with register.
