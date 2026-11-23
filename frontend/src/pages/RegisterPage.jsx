@@ -16,10 +16,11 @@ export default function RegisterPage() {
 
   return (
     <main className="auth-page">
-      <AuthForm
+            <AuthForm
         title="Create an account"
         submitLabel="Register"
         onSubmit={handleRegister}
+        passwordAutoComplete="new-password"
       />
       <p>
         Already registered? <Link to="/login">Log in</Link>

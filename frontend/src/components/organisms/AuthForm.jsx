@@ -1,8 +1,14 @@
 import { useState } from "react";
 import FormField from "../molecules/FormField";
+import PasswordField from "../molecules/PasswordField";
 import Button from "../atoms/Button";
 
-export default function AuthForm({ title, submitLabel, onSubmit }) {
+export default function AuthForm({
+  title,
+  submitLabel,
+  onSubmit,
+  passwordAutoComplete = "current-password",
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -36,13 +42,12 @@ export default function AuthForm({ title, submitLabel, onSubmit }) {
         required
       />
 
-      <FormField
+      <PasswordField
         id="password"
         label="Password"
-        type="password"
         value={password}
         onChange={(event) => setPassword(event.target.value)}
-        autoComplete="current-password"
+        autoComplete={passwordAutoComplete}
         required
       />
 
